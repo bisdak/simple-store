@@ -20,6 +20,7 @@ class Config:
     OPENAPI_SWAGGER_UI_URL = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
     PROPAGATE_EXCEPTIONS = True
     SECRET_KEY = os.getenv("JWT_SECRET_KEY", "secret")
+    BCRYPT_LOG_ROUNDS = 4
     TOKEN_EXPIRE_HOURS = 0
     TOKEN_EXPIRE_MINUTES = 0
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -43,6 +44,7 @@ class ProductionConfig(Config):
     """Production configuration."""
 
     TOKEN_EXPIRE_HOURS = 1
+    BCRYPT_LOG_ROUNDS = 13
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", SQLITE_PROD)
     PRESERVE_CONTEXT_ON_EXCEPTION = True
 
