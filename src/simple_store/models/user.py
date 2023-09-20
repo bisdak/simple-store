@@ -1,9 +1,9 @@
 """Class definition for User model."""
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta, timezone
 from uuid import uuid4
 
-import jwt
 from flask import current_app
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from simple_store import db, bcrypt
@@ -13,10 +13,10 @@ from simple_store.utils.datetime_util import (
     make_tzaware,
     localized_dt_string,
 )
-from simple_store.utils.result import Result
+from flask_jwt_extended import create_access_token
 
 
-class UserModel(db.Model):
+class User(db.Model):
     """User model for storing logon credentials and other details."""
 
     __tablename__ = "site_user"
@@ -65,41 +65,19 @@ class UserModel(db.Model):
     def find_by_public_id(cls, public_id):
         return cls.query.filter_by(public_id=public_id).first()
 
-    def encode_access_token(self):
-        now = datetime.now(timezone.utc)
+    def create_access_token(self):
         token_age_h = current_app.config.get("TOKEN_EXPIRE_HOURS")
         token_age_m = current_app.config.get("TOKEN_EXPIRE_MINUTES")
-        expire = now + timedelta(hours=token_age_h, minutes=token_age_m)
+        expire = timedelta(hours=token_age_h, minutes=token_age_m)
         if current_app.config["TESTING"]:
-            expire = now + timedelta(seconds=5)
-        payload = dict(exp=expire, iat=now, sub=self.public_id, admin=self.admin)
-        key = current_app.config.get("SECRET_KEY")
-        return jwt.encode(payload, key, algorithm="HS256")
-
-    @staticmethod
-    def decode_access_token(access_token):
-        if isinstance(access_token, bytes):
-            access_token = access_token.decode("ascii")
-        if access_token.startswith("Bearer "):
-            split = access_token.split("Bearer")
-            access_token = split[1].strip()
-        try:
-            key = current_app.config.get("SECRET_KEY")
-            payload = jwt.decode(access_token, key, algorithms=["HS256"])
-        except jwt.ExpiredSignatureError:
-            error = "Access token expired. Please log in again."
-            return Result.Fail(error)
-        except jwt.InvalidTokenError:
-            error = "Invalid token. Please log in again."
-            return Result.Fail(error)
-
-        if BlacklistedToken.check_blacklist(access_token):
-            error = "Token blacklisted. Please log in again."
-            return Result.Fail(error)
-        token_payload = dict(
-            public_id=payload["sub"],
-            admin=payload["admin"],
-            token=access_token,
-            expires_at=payload["exp"],
+            expire = timedelta(seconds=5)
+        return create_access_token(
+            identity=self.public_id, expires_delta=expire, fresh=True
         )
-        return Result.Ok(token_payload)
+
+
+class UserModelSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = User
+        include_relationships = True
+        load_instance = True
