@@ -3,8 +3,9 @@ from flask import url_for
 
 EMAIL = "new_user@email.com"
 PASSWORD = "test12345"
-BAD_REQUEST = "Input payload validation failed"
-WWW_AUTH_NO_TOKEN = 'Bearer realm="registered_user@mydomain.com"'
+store = {
+    "name": "store_1",
+}
 
 
 def user_data(email, password):

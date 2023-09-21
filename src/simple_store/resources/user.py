@@ -4,7 +4,7 @@ from flask_smorest import Blueprint, abort
 
 from simple_store import BlacklistedToken
 from simple_store.models.user import User as UserModel, UserModelSchema
-from simple_store.schema import UserSchema
+from simple_store.schemas import UserSchema
 from flask_jwt_extended import (
     create_refresh_token,
     jwt_required,
