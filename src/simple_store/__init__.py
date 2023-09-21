@@ -1,4 +1,5 @@
-from flask import Flask, jsonify
+from datetime import timezone
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_smorest import Api
 from flask_bcrypt import Bcrypt
@@ -6,6 +7,7 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 
+from simple_store.utils.datetime_util import utc_now, dtaware_fromtimestamp
 from simple_store.config import get_config
 
 cors = CORS()
@@ -34,9 +36,10 @@ def create_app(config_name):
             return {"is_admin": True}
         return {"is_admin": False}
 
-    # @jwt.token_in_blocklist_loader
-    # def check_if_token_in_blocklist(jwt_header, jwt_payload):
-    #     return jwt_payload["jti"] in BLOCKLIST
+    @jwt.token_in_blocklist_loader
+    def check_if_token_in_blocklist(jwt_header, jwt_payload):
+        token = request.headers["Authorization"].split(" ")[1]
+        return BlacklistedToken.check_blacklist(token)
 
     @jwt.expired_token_loader
     def expired_token_callback(jwt_header, jwt_payload):
@@ -89,3 +92,38 @@ def create_app(config_name):
 
     api.register_blueprint(UserBlueprint)
     return app
+
+
+class BlacklistedToken(db.Model):
+    """BlacklistedToken Model for storing JWT tokens."""
+
+    __tablename__ = "token_blacklist"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    token = db.Column(db.String(500), unique=True, nullable=False)
+    blacklisted_on = db.Column(db.DateTime, default=utc_now)
+    expires_at = db.Column(db.DateTime, nullable=False)
+
+    def __init__(self, token, expires_at):
+        self.token = token
+        self.expires_at = dtaware_fromtimestamp(expires_at, use_tz=timezone.utc)
+
+    def __repr__(self):
+        return f"<BlacklistToken token={self.token}>"
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+
+    @classmethod
+    def check_blacklist(cls, token):
+        exists = cls.query.filter_by(token=token).first()
+        return True if exists else False
+
+    @classmethod
+    def delete_expired_token(cls):
+        tokens = cls.query.all()
+        for token in tokens:
+            if token.expires_at < utc_now().replace(tzinfo=None):
+                db.session.delete(token)
+        db.session.commit()

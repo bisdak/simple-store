@@ -1,9 +1,16 @@
+from flask import request
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 
+from simple_store import BlacklistedToken
 from simple_store.models.user import User as UserModel, UserModelSchema
 from simple_store.schema import UserSchema
-from flask_jwt_extended import create_refresh_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import (
+    create_refresh_token,
+    jwt_required,
+    get_jwt_identity,
+    get_jwt,
+)
 
 blp = Blueprint("Users", "users", description="Operations on users")
 
@@ -52,3 +59,16 @@ class GetUser(MethodView):
         user = UserModel.find_by_public_id(public_id)
         user_schema = UserModelSchema()
         return user_schema.dump(user), 200
+
+
+@blp.route("/logout", endpoint="logout")
+class LogoutUser(MethodView):
+    @jwt_required()
+    def post(self):
+        """Add token to blacklist, deauthenticating the current user."""
+        token = request.headers["Authorization"].split(" ")[1]
+        expires_at = get_jwt()["exp"]
+        blacklisted_token = BlacklistedToken(token, expires_at)
+        BlacklistedToken.delete_expired_token()
+        blacklisted_token.save_to_db()
+        return {"message": "Successfully logged out."}, 200
