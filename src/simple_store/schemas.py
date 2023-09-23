@@ -1,10 +1,18 @@
 from marshmallow import Schema, fields
 
 
-class UserSchema(Schema):
+class PlainUserSchema(Schema):
     id = fields.Int()
     email = fields.Email(required=True)
     password = fields.Str(load_only=True)
+
+
+class UserSchema(Schema):
+    id = fields.Int()
+    email = fields.Email()
+    registered_on = fields.DateTime()
+    admin = fields.Bool()
+    public_id = fields.Str()
 
 
 class PlainItemSchema(Schema):

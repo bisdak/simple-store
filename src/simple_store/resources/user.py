@@ -3,8 +3,8 @@ from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 
 from simple_store import BlacklistedToken
-from simple_store.models.user import User as UserModel, UserModelSchema
-from simple_store.schemas import UserSchema
+from simple_store.models.user import User as UserModel
+from simple_store.schemas import PlainUserSchema, UserSchema
 from flask_jwt_extended import (
     create_refresh_token,
     jwt_required,
@@ -17,7 +17,7 @@ blp = Blueprint("Users", "users", description="Operations on users")
 
 @blp.route("/register", endpoint="register")
 class UserRegister(MethodView):
-    @blp.arguments(UserSchema)
+    @blp.arguments(PlainUserSchema)
     def post(self, user_data):
         """Register a new user and return access_token."""
         if UserModel.find_by_email(user_data.get("email", "")):
@@ -37,7 +37,7 @@ class UserRegister(MethodView):
 
 @blp.route("/login", endpoint="login")
 class LoginUser(MethodView):
-    @blp.arguments(UserSchema)
+    @blp.arguments(PlainUserSchema)
     def post(self, user_data):
         """Authenticate an existing user and return an access token."""
         user = UserModel.find_by_email(user_data["email"])
@@ -53,12 +53,12 @@ class LoginUser(MethodView):
 @blp.route("/user", endpoint="user")
 class GetUser(MethodView):
     @jwt_required()
+    @blp.response(200, UserSchema)
     def get(self):
         """Validate access token and return user info."""
         public_id = get_jwt_identity()
         user = UserModel.find_by_public_id(public_id)
-        user_schema = UserModelSchema()
-        return user_schema.dump(user), 200
+        return user
 
 
 @blp.route("/logout", endpoint="logout")

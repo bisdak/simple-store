@@ -21,6 +21,7 @@ def create_app(config_name):
     app.config.from_object(get_config(config_name))
 
     from simple_store.resources.user import blp as UserBlueprint
+    from simple_store.resources.store import blp as StoreBlueprint
 
     cors.init_app(app)
     db.init_app(app)
@@ -91,6 +92,7 @@ def create_app(config_name):
         )
 
     api.register_blueprint(UserBlueprint)
+    api.register_blueprint(StoreBlueprint)
     return app
 
 

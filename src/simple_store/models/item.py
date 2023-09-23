@@ -1,6 +1,4 @@
 from simple_store import db
-from simple_store.models.store import Store
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 
 class Item(db.Model):
@@ -26,10 +24,3 @@ class Item(db.Model):
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
-
-
-class ItemModelSchema(SQLAlchemyAutoSchema):
-    class Meta:
-        model = Item
-        include_relationships = True
-        load_instance = True

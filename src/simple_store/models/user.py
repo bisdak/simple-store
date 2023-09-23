@@ -3,7 +3,6 @@ from datetime import timedelta, timezone
 from uuid import uuid4
 
 from flask import current_app
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from simple_store import db, bcrypt
@@ -27,6 +26,8 @@ class User(db.Model):
     registered_on = db.Column(db.DateTime, default=utc_now)
     admin = db.Column(db.Boolean, default=False)
     public_id = db.Column(db.String(36), unique=True, default=lambda: str(uuid4()))
+
+    stores = db.relationship("Store", back_populates="user", lazy="dynamic")
 
     def __repr__(self):
         return (
@@ -74,10 +75,3 @@ class User(db.Model):
         return create_access_token(
             identity=self.public_id, expires_delta=expire, fresh=True
         )
-
-
-class UserModelSchema(SQLAlchemyAutoSchema):
-    class Meta:
-        model = User
-        include_relationships = True
-        load_instance = True

@@ -1,6 +1,5 @@
 from simple_store import db
 from simple_store.utils.datetime_util import utc_now
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 
 class Store(db.Model):
@@ -14,10 +13,12 @@ class Store(db.Model):
         db.Integer, db.ForeignKey("site_user.id"), unique=False, nullable=False
     )
     items = db.relationship("Item", back_populates="store", lazy="dynamic")
+    user = db.relationship("User", back_populates="stores")
 
+    @classmethod
+    def find_by_name(cls, name):
+        return cls.query.filter_by(name=name).first()
 
-class StoreModelSchema(SQLAlchemyAutoSchema):
-    class Meta:
-        model = Store
-        include_relationships = True
-        load_instance = True
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()

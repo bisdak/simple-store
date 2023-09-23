@@ -4,6 +4,8 @@ import pytest
 from simple_store import create_app
 from simple_store import db as database
 from simple_store.models.user import User
+from simple_store.models.store import Store
+from simple_store.models.item import Item
 from tests.util import EMAIL, PASSWORD
 
 

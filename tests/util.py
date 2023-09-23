@@ -3,9 +3,7 @@ from flask import url_for
 
 EMAIL = "new_user@email.com"
 PASSWORD = "test12345"
-store = {
-    "name": "store_1",
-}
+STORE = "Amazon"
 
 
 def user_data(email, password):
@@ -29,4 +27,11 @@ def logout_user(test_client, access_token):
 def get_user(test_client, access_token):
     return test_client.get(
         url_for("Users.user"), headers={"Authorization": f"Bearer {access_token}"}
+    )
+
+
+def register_store(test_client, access_token, store=STORE):
+    return test_client.post(
+        url_for("Stores.store", name=store),
+        headers={"Authorization": f"Bearer {access_token}"},
     )
