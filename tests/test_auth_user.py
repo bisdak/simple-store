@@ -19,6 +19,7 @@ def test_auth_user(client, db):
     response = get_user(client, access_token)
     assert response.status_code == HTTPStatus.OK
     assert "email" in response.json and response.json["email"] == "new_user@email.com"
+    assert "admin" in response.json and response.json["admin"] == False
     assert "public_id" in response.json
     assert "registered_on" in response.json
 

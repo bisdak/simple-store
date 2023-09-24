@@ -35,3 +35,14 @@ def register_store(test_client, access_token, store=STORE):
         url_for("Stores.store", name=store),
         headers={"Authorization": f"Bearer {access_token}"},
     )
+
+
+def get_store(test_client, store=STORE):
+    return test_client.get(url_for("Stores.store", name=store))
+
+
+def delete_store(test_client, access_token, store=STORE):
+    return test_client.delete(
+        url_for("Stores.store", name=store),
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
